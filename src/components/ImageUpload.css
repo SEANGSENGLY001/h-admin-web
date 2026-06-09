@@ -1,0 +1,46 @@
+.img-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.img-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+.img-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.img-input {
+  flex: 1;
+  font: inherit;
+  font-size: 13px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  color: var(--text-h);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.img-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.img-preview {
+  margin-top: 4px;
+}
+
+.img-preview img {
+  max-width: 120px;
+  max-height: 68px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  object-fit: cover;
+}

@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { getSiteConfig, updateSection } from "../../services/siteconfig";
+import { useToast } from "../../components/Toast";
 import "./SettingsPage.css";
 
 export default function SettingsPage() {
+  const toast = useToast();
   const [config, setConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     getSiteConfig()
@@ -26,10 +27,9 @@ export default function SettingsPage() {
     setSaving(true);
     try {
       await updateSection(section, config[section]);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      toast("Settings saved");
     } catch {
-      alert("Failed to save");
+      toast("Failed to save settings", "error");
     } finally {
       setSaving(false);
     }
@@ -43,7 +43,6 @@ export default function SettingsPage() {
     <div className="settings-page">
       <div className="section-header">
         <h3>Site Configuration</h3>
-        {saved && <span className="settings-saved">Saved!</span>}
       </div>
 
       <SectionCard

@@ -1,0 +1,12 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "titles",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "contentType", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    }
+  ]
+}

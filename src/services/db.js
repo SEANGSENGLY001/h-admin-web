@@ -26,8 +26,8 @@ function docRef(path, id) {
 function addTimestamps(data, isUpdate = false) {
   const ts = serverTimestamp();
   return isUpdate
-    ? { ...data, updatedAt: ts }
-    : { ...data, createdAt: ts, updatedAt: ts };
+    ? { ...data, updatedAt: data.updatedAt ?? ts }
+    : { ...data, createdAt: data.createdAt ?? ts, updatedAt: data.updatedAt ?? ts };
 }
 
 function extractData(snapshot) {

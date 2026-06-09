@@ -1,15 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
 import { getTitles, deleteTitle } from "../../services/titles";
 import DataTable from "../../components/DataTable";
-import FormModal from "../../components/FormModal";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import StatusBadge from "../../components/StatusBadge";
+import { useToast } from "../../components/Toast";
 import TitleForm from "./TitleForm";
 
 export default function TVShowsPage() {
+  const toast = useToast();
   const [shows, setShows] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [formOpen, setFormOpen] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -28,16 +28,6 @@ export default function TVShowsPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  function openCreate() {
-    setEditItem(null);
-    setFormOpen(true);
-  }
-
-  function openEdit(row) {
-    setEditItem(row);
-    setFormOpen(true);
-  }
-
   async function handleDelete() {
     if (!deleteTarget) return;
     setDeleting(true);
@@ -45,8 +35,9 @@ export default function TVShowsPage() {
       await deleteTitle(deleteTarget.id);
       setDeleteTarget(null);
       await load();
+      toast("TV show deleted");
     } catch {
-      alert("Failed to delete");
+      toast("Failed to delete TV show", "error");
     } finally {
       setDeleting(false);
     }
@@ -61,29 +52,40 @@ export default function TVShowsPage() {
     { key: "isTrending", label: "Trending", render: (r) => r.isTrending ? "✓" : "—" },
   ];
 
+  if (editItem !== null) {
+    return (
+      <div>
+        <div className="ef-header">
+          <h3>{editItem === true ? "Add TV Show" : "Edit TV Show"}</h3>
+          <button className="ef-back" onClick={() => setEditItem(null)}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+            Back to List
+          </button>
+        </div>
+        <TitleForm
+          title={editItem === true ? null : editItem}
+          onSaved={() => { setEditItem(null); load(); }}
+          onCancel={() => setEditItem(null)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="section-header">
         <h3>TV Shows</h3>
-        <button className="section-btn" onClick={openCreate}>+ Add TV Show</button>
+        <button className="section-btn" onClick={() => setEditItem(true)}>+ Add TV Show</button>
       </div>
 
       <DataTable
         columns={columns}
         data={shows}
         loading={loading}
-        onEdit={openEdit}
+        onEdit={(r) => setEditItem(r)}
         onDelete={setDeleteTarget}
         emptyMessage="No TV shows found"
       />
-
-      <FormModal open={formOpen} onClose={() => setFormOpen(false)} title={editItem ? "Edit TV Show" : "Add TV Show"}>
-        <TitleForm
-          title={editItem}
-          onSaved={() => { setFormOpen(false); load(); }}
-          onCancel={() => setFormOpen(false)}
-        />
-      </FormModal>
 
       <ConfirmDialog
         open={!!deleteTarget}

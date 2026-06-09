@@ -1,15 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
 import { getTitles, deleteTitle } from "../../services/titles";
 import DataTable from "../../components/DataTable";
-import FormModal from "../../components/FormModal";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import StatusBadge from "../../components/StatusBadge";
+import { useToast } from "../../components/Toast";
 import TitleForm from "./TitleForm";
 
 export default function MoviesPage() {
+  const toast = useToast();
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [formOpen, setFormOpen] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -28,16 +28,6 @@ export default function MoviesPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  function openCreate() {
-    setEditItem(null);
-    setFormOpen(true);
-  }
-
-  function openEdit(row) {
-    setEditItem(row);
-    setFormOpen(true);
-  }
-
   async function handleDelete() {
     if (!deleteTarget) return;
     setDeleting(true);
@@ -45,8 +35,9 @@ export default function MoviesPage() {
       await deleteTitle(deleteTarget.id);
       setDeleteTarget(null);
       await load();
+      toast("Movie deleted");
     } catch {
-      alert("Failed to delete");
+      toast("Failed to delete movie", "error");
     } finally {
       setDeleting(false);
     }
@@ -61,29 +52,40 @@ export default function MoviesPage() {
     { key: "isTrending", label: "Trending", render: (r) => r.isTrending ? "✓" : "—" },
   ];
 
+  if (editItem !== null) {
+    return (
+      <div>
+        <div className="ef-header">
+          <h3>{editItem === true ? "Add Movie" : "Edit Movie"}</h3>
+          <button className="ef-back" onClick={() => setEditItem(null)}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+            Back to List
+          </button>
+        </div>
+        <TitleForm
+          title={editItem === true ? null : editItem}
+          onSaved={() => { setEditItem(null); load(); }}
+          onCancel={() => setEditItem(null)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="section-header">
         <h3>Movies</h3>
-        <button className="section-btn" onClick={openCreate}>+ Add Movie</button>
+        <button className="section-btn" onClick={() => setEditItem(true)}>+ Add Movie</button>
       </div>
 
       <DataTable
         columns={columns}
         data={movies}
         loading={loading}
-        onEdit={openEdit}
+        onEdit={(r) => setEditItem(r)}
         onDelete={setDeleteTarget}
         emptyMessage="No movies found"
       />
-
-      <FormModal open={formOpen} onClose={() => setFormOpen(false)} title={editItem ? "Edit Movie" : "Add Movie"}>
-        <TitleForm
-          title={editItem}
-          onSaved={() => { setFormOpen(false); load(); }}
-          onCancel={() => setFormOpen(false)}
-        />
-      </FormModal>
 
       <ConfirmDialog
         open={!!deleteTarget}

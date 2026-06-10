@@ -1,15 +1,19 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { getSchedule, createScheduleItem, updateScheduleItem, deleteScheduleItem } from "../../services/schedule";
+import { getTitles } from "../../services/titles";
 import DataTable from "../../components/DataTable";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import StatusBadge from "../../components/StatusBadge";
 import { useToast } from "../../components/Toast";
 import "../../components/EditForm.css";
+import "./SchedulePage.css";
 
 function ScheduleForm({ item, onSaved, onCancel }) {
   const toast = useToast();
-  const [playlistId, setPlaylistId] = useState(item?.playlistId || "");
-  const [videoId, setVideoId] = useState(item?.videoId || "");
+  const [titles, setTitles] = useState([]);
+  const [titleSearch, setTitleSearch] = useState("");
+  const [selectedTitle, setSelectedTitle] = useState(null);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [airDate, setAirDate] = useState(item?.airDate || "");
   const [airTime, setAirTime] = useState(item?.airTime || "");
   const [duration, setDuration] = useState(item?.duration ?? 60);
@@ -20,12 +24,57 @@ function ScheduleForm({ item, onSaved, onCancel }) {
   const [priority, setPriority] = useState(item?.priority ?? 0);
   const [isActive, setIsActive] = useState(item?.isActive ?? true);
   const [saving, setSaving] = useState(false);
+  const searchRef = useRef(null);
+
+  useEffect(() => {
+    getTitles().then((all) => {
+      setTitles(all);
+      if (item?.playlistId) {
+        const found = all.find((t) => t.id === item.playlistId);
+        if (found) {
+          setSelectedTitle(found);
+          setTitleSearch(found.title);
+        }
+      }
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    function handleClick(e) {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  function handleSelectTitle(title) {
+    setSelectedTitle(title);
+    setTitleSearch(title.title);
+    setShowDropdown(false);
+  }
+
+  const filteredTitles = titles.filter(
+    (t) => t.title.toLowerCase().includes(titleSearch.toLowerCase())
+  ).slice(0, 20);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setSaving(true);
     try {
-      const data = { playlistId, videoId, airDate, airTime, duration: Number(duration), episodeTitle, episodeNumber: Number(episodeNumber), seasonNumber: Number(seasonNumber), isRepeat, priority: Number(priority), isActive };
+      const data = {
+        playlistId: selectedTitle?.id || "",
+        airDate,
+        airTime,
+        duration: Number(duration),
+        episodeTitle,
+        episodeNumber: Number(episodeNumber),
+        seasonNumber: Number(seasonNumber),
+        isRepeat,
+        priority: Number(priority),
+        isActive,
+      };
       if (item) await updateScheduleItem(item.id, data);
       else await createScheduleItem(data);
       toast("Schedule entry saved");
@@ -39,54 +88,88 @@ function ScheduleForm({ item, onSaved, onCancel }) {
       <div className="ef-card">
         <div className="ef-card-title">Schedule Details</div>
         <div className="ef-grid">
-          <div className="ef-field">
-            <label>Air Date *</label>
-            <input className="ef-input" type="date" value={airDate} onChange={(e) => setAirDate(e.target.value)} required />
+          <div className="ef-field full">
+            <label>Movie / TV Series *</label>
+            <div className="st-search" ref={searchRef}>
+              <input
+                className={`ef-input${selectedTitle ? " st-search-input" : ""}`}
+                value={titleSearch}
+                onChange={(e) => { setTitleSearch(e.target.value); setShowDropdown(true); }}
+                onFocus={() => setShowDropdown(true)}
+                placeholder="Search by title..."
+                required
+              />
+              {selectedTitle && (
+                <span className="st-badge">
+                  {selectedTitle.contentType === "movie" ? "Movie" : "Series"}
+                </span>
+              )}
+              {showDropdown && filteredTitles.length > 0 && (
+                <div className="st-dropdown">
+                  {filteredTitles.map((t) => (
+                    <div
+                      key={t.id}
+                      className={`st-option${selectedTitle?.id === t.id ? " selected" : ""}`}
+                      onClick={() => handleSelectTitle(t)}
+                    >
+                      {t.posterUrl && <img className="st-opt-thumb" src={t.posterUrl} alt="" />}
+                      <div className="st-opt-info">
+                        <span className="st-opt-title">{t.title}</span>
+                        <div className="st-opt-meta">
+                          <span className="st-opt-type">{t.contentType === "movie" ? "Movie" : "Series"}</span>
+                          {t.year && <span className="st-opt-year">{t.year}</span>}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {showDropdown && titleSearch && filteredTitles.length === 0 && (
+                <div className="st-dropdown st-empty">No titles found</div>
+              )}
+            </div>
           </div>
-          <div className="ef-field">
-            <label>Air Time</label>
-            <input className="ef-input" type="time" value={airTime} onChange={(e) => setAirTime(e.target.value)} />
+
+          <div className="ef-field full">
+            <label>Air Date & Time</label>
+            <div className="st-input-group">
+              <input className="ef-input" type="date" value={airDate} onChange={(e) => setAirDate(e.target.value)} required />
+              <span className="st-group-label">at</span>
+              <input className="ef-input" type="time" value={airTime} onChange={(e) => setAirTime(e.target.value)} />
+            </div>
           </div>
-          <div className="ef-field">
+
+          <div className="ef-field full">
             <label>Episode Title</label>
             <input className="ef-input" value={episodeTitle} onChange={(e) => setEpisodeTitle(e.target.value)} placeholder="Episode title" />
           </div>
-          <div className="ef-field">
-            <label>Duration (min)</label>
-            <input className="ef-input" type="number" min="1" value={duration} onChange={(e) => setDuration(Number(e.target.value))} />
-          </div>
-          <div className="ef-field">
-            <label>Episode #</label>
-            <input className="ef-input" type="number" min="1" value={episodeNumber} onChange={(e) => setEpisodeNumber(Number(e.target.value))} />
-          </div>
-          <div className="ef-field">
-            <label>Season #</label>
-            <input className="ef-input" type="number" min="1" value={seasonNumber} onChange={(e) => setSeasonNumber(Number(e.target.value))} />
-          </div>
-          <div className="ef-field">
-            <label>Priority</label>
-            <input className="ef-input" type="number" min="0" value={priority} onChange={(e) => setPriority(Number(e.target.value))} />
-          </div>
-          <div className="ef-field">
-            <label>Playlist ID</label>
-            <input className="ef-input" value={playlistId} onChange={(e) => setPlaylistId(e.target.value)} placeholder="titleId" />
-          </div>
-          <div className="ef-field">
-            <label>Video ID</label>
-            <input className="ef-input" value={videoId} onChange={(e) => setVideoId(e.target.value)} placeholder="videoId" />
-          </div>
-        </div>
-      </div>
 
-      <div className="ef-card">
-        <div className="ef-card-title">Options</div>
-        <div className="ef-check-row">
-          <input type="checkbox" id="isRepeat" checked={isRepeat} onChange={(e) => setIsRepeat(e.target.checked)} />
-          <label htmlFor="isRepeat">Repeat</label>
-        </div>
-        <div className="ef-check-row">
-          <input type="checkbox" id="isActive" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
-          <label htmlFor="isActive">Active</label>
+          <div className="ef-field full">
+            <label>Details</label>
+            <div className="st-input-group">
+              <input className="ef-input" type="number" min="1" value={duration} onChange={(e) => setDuration(Number(e.target.value))} placeholder="Duration" />
+              <span className="st-group-label">min</span>
+              <input className="ef-input" type="number" min="1" value={episodeNumber} onChange={(e) => setEpisodeNumber(Number(e.target.value))} placeholder="Ep#" style={{ maxWidth: 100 }} />
+              <span className="st-group-label">Ep</span>
+              <input className="ef-input" type="number" min="1" value={seasonNumber} onChange={(e) => setSeasonNumber(Number(e.target.value))} placeholder="S#" style={{ maxWidth: 100 }} />
+              <span className="st-group-label">S</span>
+              <input className="ef-input" type="number" min="0" value={priority} onChange={(e) => setPriority(Number(e.target.value))} placeholder="Priority" style={{ maxWidth: 110 }} />
+              <span className="st-group-label">prio</span>
+            </div>
+          </div>
+
+          <div className="ef-field full">
+            <div className="st-inline-checks">
+              <label>
+                <input type="checkbox" checked={isRepeat} onChange={(e) => setIsRepeat(e.target.checked)} />
+                Repeat
+              </label>
+              <label>
+                <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
+                Active
+              </label>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -107,7 +190,7 @@ export default function SchedulePage() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    try { setItems(await getSchedule({ isActive: true })); }
+    try { setItems(await getSchedule()); }
     catch { /* silent */ }
     finally { setLoading(false); }
   }, []);

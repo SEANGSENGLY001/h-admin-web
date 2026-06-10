@@ -39,6 +39,14 @@ body {
   margin: 0;
 }
 
+* {
+  scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
 #root {
   min-height: 100svh;
   display: flex;

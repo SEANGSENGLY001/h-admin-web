@@ -1,3 +1,24 @@
+@keyframes loginFadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes loginPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+@keyframes loginIconPop {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes loginFields {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
 .login-page {
   position: relative;
   display: flex;
@@ -12,9 +33,10 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 600px 400px at 20% 50%, rgba(124, 92, 252, 0.06), transparent),
-    radial-gradient(ellipse 500px 300px at 80% 30%, rgba(124, 92, 252, 0.04), transparent);
+    radial-gradient(ellipse 600px 400px at 20% 50%, rgba(124, 92, 252, 0.1), transparent),
+    radial-gradient(ellipse 500px 300px at 80% 30%, rgba(124, 92, 252, 0.08), transparent);
   pointer-events: none;
+  animation: loginPulse 4s ease-in-out infinite;
 }
 
 .login-form {
@@ -29,6 +51,7 @@
   border-radius: 14px;
   padding: 40px 36px;
   box-shadow: var(--shadow-lg);
+  animation: loginFadeUp 0.6s ease-out;
 }
 
 .login-icon {
@@ -41,10 +64,12 @@
   border-radius: 50%;
   background: var(--accent-bg);
   color: var(--accent);
+  animation: loginIconPop 0.5s ease-out 0.2s both;
 }
 
 .login-header {
   text-align: center;
+  animation: loginFadeUp 0.5s ease-out 0.3s both;
 }
 
 .login-header h1 {
@@ -68,6 +93,7 @@
   font-size: 13px;
   text-align: center;
   font-weight: 500;
+  animation: loginFadeUp 0.3s ease-out;
 }
 
 .login-field {
@@ -75,6 +101,14 @@
   flex-direction: column;
   gap: 5px;
   text-align: left;
+}
+
+.login-field:nth-of-type(1) {
+  animation: loginFields 0.4s ease-out 0.4s both;
+}
+
+.login-field:nth-of-type(2) {
+  animation: loginFields 0.4s ease-out 0.5s both;
 }
 
 .login-field label {
@@ -118,6 +152,7 @@
   transition: background 0.2s;
   margin-top: 4px;
   letter-spacing: 0.2px;
+  animation: loginFadeUp 0.4s ease-out 0.6s both;
 }
 
 .login-btn:hover:not(:disabled) {
@@ -134,4 +169,5 @@
   font-size: 11px;
   color: var(--text-muted);
   letter-spacing: 0.3px;
+  animation: loginFadeUp 0.4s ease-out 0.7s both;
 }

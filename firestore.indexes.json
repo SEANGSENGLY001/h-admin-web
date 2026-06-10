@@ -7,6 +7,23 @@
         { "fieldPath": "contentType", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "tv_schedule",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "isActive", "order": "ASCENDING" },
+        { "fieldPath": "airDate", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "tv_schedule",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "airDate", "order": "ASCENDING" },
+        { "fieldPath": "isActive", "order": "ASCENDING" },
+        { "fieldPath": "airTime", "order": "ASCENDING" }
+      ]
     }
   ]
 }

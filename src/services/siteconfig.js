@@ -1,13 +1,17 @@
+import { doc, setDoc } from "firebase/firestore/lite";
+import { db } from "../firebase";
 import { getDoc, updateDoc } from "./db";
 
-const PATH = "siteconfig/settings";
+const REF = doc(db, "siteconfig", "settings");
 
 export async function getSiteConfig() {
   return getDoc("siteconfig", "settings");
 }
 
+import { serverTimestamp } from "firebase/firestore/lite";
+
 export async function updateSection(section, data) {
-  return updateDoc("siteconfig", "settings", { [section]: data });
+  return setDoc(REF, { [section]: data, updatedAt: serverTimestamp() }, { merge: true });
 }
 
 export async function updateSocial(data) {

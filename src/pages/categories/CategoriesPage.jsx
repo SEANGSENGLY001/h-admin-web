@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { getCategories, createCategory, updateCategory, deleteCategory } from "../../services/categories";
+import { getCategories, getCategory, createCategory, updateCategory, deleteCategory } from "../../services/categories";
 import DataTable from "../../components/DataTable";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import StatusBadge from "../../components/StatusBadge";
@@ -72,10 +72,12 @@ function CategoryForm({ item, onSaved, onCancel }) {
   );
 }
 
-export default function CategoriesPage() {
+export default function CategoriesPage({ routeParams }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [editItem, setEditItem] = useState(null);
+  const [editItem, setEditItem] = useState(
+    routeParams === "new" ? true : null
+  );
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -87,6 +89,23 @@ export default function CategoriesPage() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (routeParams?.startsWith("edit/")) {
+      const id = routeParams.slice(5);
+      getCategory(id).then(data => { if (data) setEditItem(data); });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (editItem === true) {
+      window.history.replaceState(null, "", "#categories/new");
+    } else if (editItem && editItem.id) {
+      window.history.replaceState(null, "", `#categories/edit/${editItem.id}`);
+    } else if (editItem === null && window.location.hash.includes("/")) {
+      window.history.replaceState(null, "", "#categories");
+    }
+  }, [editItem]);
 
   const columns = [
     { key: "name", label: "Name", render: (r) => <span style={{ color: "var(--text-h)", fontWeight: 500 }}>{r.name}</span> },

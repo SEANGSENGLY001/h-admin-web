@@ -198,6 +198,29 @@
   color: var(--danger);
 }
 
+.tf-url-default {
+  display: flex;
+  place-content: center;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+
+.tf-url-default:hover {
+  color: var(--warning);
+}
+
+.tf-url-default.active {
+  color: var(--warning);
+}
+
 .tf-add-url-btn,
 .tf-add-video-btn {
   font: inherit;

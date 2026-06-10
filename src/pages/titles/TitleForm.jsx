@@ -171,7 +171,8 @@ export default function TitleForm({ title, onSaved, onCancel }) {
   function addVideoUrl(vIndex) {
     setVideos((prev) => {
       const next = [...prev];
-      next[vIndex] = { ...next[vIndex], videoUrls: [...(next[vIndex].videoUrls || []), { url: "", server: "" }] };
+      const urls = next[vIndex].videoUrls || [];
+      next[vIndex] = { ...next[vIndex], videoUrls: [...urls, { url: "", server: "", isDefault: urls.length === 0 }] };
       return next;
     });
   }
@@ -189,7 +190,20 @@ export default function TitleForm({ title, onSaved, onCancel }) {
   function removeVideoUrl(vIndex, uIndex) {
     setVideos((prev) => {
       const next = [...prev];
-      next[vIndex] = { ...next[vIndex], videoUrls: next[vIndex].videoUrls.filter((_, i) => i !== uIndex) };
+      const urls = next[vIndex].videoUrls.filter((_, i) => i !== uIndex);
+      if (urls.length > 0 && !urls.some((u) => u.isDefault)) urls[0].isDefault = true;
+      next[vIndex] = { ...next[vIndex], videoUrls: urls };
+      return next;
+    });
+  }
+
+  function setDefaultUrl(vIndex, uIndex) {
+    setVideos((prev) => {
+      const next = [...prev];
+      next[vIndex] = {
+        ...next[vIndex],
+        videoUrls: next[vIndex].videoUrls.map((u, i) => ({ ...u, isDefault: i === uIndex })),
+      };
       return next;
     });
   }
@@ -380,6 +394,16 @@ export default function TitleForm({ title, onSaved, onCancel }) {
               <label className="tf-label">Video URLs</label>
               {(v.videoUrls || []).map((vu, ui) => (
                 <div key={ui} className="tf-url-row">
+                  <button
+                    type="button"
+                    className={`tf-url-default${vu.isDefault ? " active" : ""}`}
+                    onClick={() => setDefaultUrl(i, ui)}
+                    title={vu.isDefault ? "Default server" : "Set as default"}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill={vu.isDefault ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                  </button>
                   <input className="ef-input" value={vu.url} onChange={(e) => updateVideoUrl(i, ui, "url", e.target.value)} placeholder="https://..." />
                   <input className="ef-input" value={vu.server} onChange={(e) => updateVideoUrl(i, ui, "server", e.target.value)} placeholder="Server name" />
                   <button type="button" className="tf-url-remove" onClick={() => removeVideoUrl(i, ui)}>

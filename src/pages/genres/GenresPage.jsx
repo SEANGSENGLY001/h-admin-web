@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { getGenres, createGenre, updateGenre, deleteGenre } from "../../services/genres";
+import { getGenres, getGenre, createGenre, updateGenre, deleteGenre } from "../../services/genres";
 import DataTable from "../../components/DataTable";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import StatusBadge from "../../components/StatusBadge";
@@ -67,10 +67,12 @@ function GenreForm({ item, onSaved, onCancel }) {
   );
 }
 
-export default function GenresPage() {
+export default function GenresPage({ routeParams }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [editItem, setEditItem] = useState(null);
+  const [editItem, setEditItem] = useState(
+    routeParams === "new" ? true : null
+  );
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -82,6 +84,23 @@ export default function GenresPage() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (routeParams?.startsWith("edit/")) {
+      const id = routeParams.slice(5);
+      getGenre(id).then(data => { if (data) setEditItem(data); });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (editItem === true) {
+      window.history.replaceState(null, "", "#genres/new");
+    } else if (editItem && editItem.id) {
+      window.history.replaceState(null, "", `#genres/edit/${editItem.id}`);
+    } else if (editItem === null && window.location.hash.includes("/")) {
+      window.history.replaceState(null, "", "#genres");
+    }
+  }, [editItem]);
 
   const columns = [
     { key: "name", label: "Name", render: (r) => <span style={{ color: "var(--text-h)", fontWeight: 500 }}>{r.name}</span> },

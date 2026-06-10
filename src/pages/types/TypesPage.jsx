@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { getTypes, createType, updateType, deleteType } from "../../services/types";
+import { getTypes, getType, createType, updateType, deleteType } from "../../services/types";
 import DataTable from "../../components/DataTable";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import StatusBadge from "../../components/StatusBadge";
@@ -62,10 +62,12 @@ function TypeForm({ item, onSaved, onCancel }) {
   );
 }
 
-export default function TypesPage() {
+export default function TypesPage({ routeParams }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [editItem, setEditItem] = useState(null);
+  const [editItem, setEditItem] = useState(
+    routeParams === "new" ? true : null
+  );
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -77,6 +79,23 @@ export default function TypesPage() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (routeParams?.startsWith("edit/")) {
+      const id = routeParams.slice(5);
+      getType(id).then(data => { if (data) setEditItem(data); });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (editItem === true) {
+      window.history.replaceState(null, "", "#types/new");
+    } else if (editItem && editItem.id) {
+      window.history.replaceState(null, "", `#types/edit/${editItem.id}`);
+    } else if (editItem === null && window.location.hash.includes("/")) {
+      window.history.replaceState(null, "", "#types");
+    }
+  }, [editItem]);
 
   const columns = [
     { key: "name", label: "Name", render: (r) => <span style={{ color: "var(--text-h)", fontWeight: 500 }}>{r.name}</span> },

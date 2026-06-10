@@ -1,0 +1,67 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId)
+        && request.resource.data.keys().hasOnly(['email', 'lastLogin']);
+      allow update: if isOwner(userId)
+        && request.resource.data.keys().hasOnly(['email', 'lastLogin'])
+        && !request.resource.data.keys().hasAny(['role']);
+      allow delete: if false;
+    }
+
+    match /titles/{document} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+      match /videos/{video} {
+        allow read: if isAuthenticated();
+        allow write: if isAdmin();
+      }
+    }
+
+    match /categories/{document} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /genres/{document} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /types/{document} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /tv_schedule/{document} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /siteconfig/{document} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

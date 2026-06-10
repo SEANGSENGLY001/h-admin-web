@@ -9,7 +9,15 @@ export default function ImageUpload({ label, value, onChange, placeholder = "htt
   useEffect(() => {
     if (value !== prevValue.current) {
       prevValue.current = value;
-      setStatus(value ? "loading" : "idle");
+      if (value) {
+        if (imgRef.current?.complete) {
+          setStatus(imgRef.current.naturalWidth > 0 ? "loaded" : "error");
+        } else {
+          setStatus("loading");
+        }
+      } else {
+        setStatus("idle");
+      }
     }
   }, [value]);
 

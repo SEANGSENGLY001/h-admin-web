@@ -1,16 +1,18 @@
 import { useState, useEffect, useCallback } from "react";
-import { getTitles, deleteTitle } from "../../services/titles";
+import { getTitles, getTitle, deleteTitle } from "../../services/titles";
 import DataTable from "../../components/DataTable";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import StatusBadge from "../../components/StatusBadge";
 import { useToast } from "../../components/Toast";
 import TitleForm from "./TitleForm";
 
-export default function MoviesPage() {
+export default function MoviesPage({ routeParams }) {
   const toast = useToast();
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [editItem, setEditItem] = useState(null);
+  const [editItem, setEditItem] = useState(
+    routeParams === "new" ? true : null
+  );
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -27,6 +29,23 @@ export default function MoviesPage() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (routeParams?.startsWith("edit/")) {
+      const id = routeParams.slice(5);
+      getTitle(id).then(data => { if (data) setEditItem(data); });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (editItem === true) {
+      window.history.replaceState(null, "", "#movies/new");
+    } else if (editItem && editItem.id) {
+      window.history.replaceState(null, "", `#movies/edit/${editItem.id}`);
+    } else if (editItem === null && window.location.hash.includes("/")) {
+      window.history.replaceState(null, "", "#movies");
+    }
+  }, [editItem]);
 
   async function handleDelete() {
     if (!deleteTarget) return;

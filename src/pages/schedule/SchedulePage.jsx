@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { getSchedule, createScheduleItem, updateScheduleItem, deleteScheduleItem } from "../../services/schedule";
+import { getSchedule, getScheduleItem, createScheduleItem, updateScheduleItem, deleteScheduleItem } from "../../services/schedule";
 import { getTitles } from "../../services/titles";
 import DataTable from "../../components/DataTable";
 import ConfirmDialog from "../../components/ConfirmDialog";
@@ -181,10 +181,12 @@ function ScheduleForm({ item, onSaved, onCancel }) {
   );
 }
 
-export default function SchedulePage() {
+export default function SchedulePage({ routeParams }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [editItem, setEditItem] = useState(null);
+  const [editItem, setEditItem] = useState(
+    routeParams === "new" ? true : null
+  );
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -196,6 +198,23 @@ export default function SchedulePage() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (routeParams?.startsWith("edit/")) {
+      const id = routeParams.slice(5);
+      getScheduleItem(id).then(data => { if (data) setEditItem(data); });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (editItem === true) {
+      window.history.replaceState(null, "", "#schedule/new");
+    } else if (editItem && editItem.id) {
+      window.history.replaceState(null, "", `#schedule/edit/${editItem.id}`);
+    } else if (editItem === null && window.location.hash.includes("/")) {
+      window.history.replaceState(null, "", "#schedule");
+    }
+  }, [editItem]);
 
   const columns = [
     { key: "episodeTitle", label: "Episode", render: (r) => <span style={{ color: "var(--text-h)", fontWeight: 500 }}>{r.episodeTitle || "Untitled"}</span> },

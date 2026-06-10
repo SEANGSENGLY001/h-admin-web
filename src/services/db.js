@@ -25,9 +25,11 @@ function docRef(path, id) {
 
 function addTimestamps(data, isUpdate = false) {
   const ts = serverTimestamp();
+  const clean = { ...data };
+  delete clean.role;
   return isUpdate
-    ? { ...data, updatedAt: data.updatedAt ?? ts }
-    : { ...data, createdAt: data.createdAt ?? ts, updatedAt: data.updatedAt ?? ts };
+    ? { ...clean, updatedAt: clean.updatedAt ?? ts }
+    : { ...clean, createdAt: clean.createdAt ?? ts, updatedAt: clean.updatedAt ?? ts };
 }
 
 function extractData(snapshot) {
